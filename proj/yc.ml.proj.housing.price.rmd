@@ -1,0 +1,177 @@
+---
+title: "A Multilinear Regression Model for Predicting Housing Price"
+author: "yung chou"
+date: "November 11, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+
+rm(list=ls())
+
+library(glmnetUtils)
+library(ggplot2)
+
+```
+
+## Data
+
+```{r}
+train1 <- read.csv('data/train_imp1.v1.csv', header=TRUE)
+#train1 <- read.csv('data/train_imp1.v1.csv', header=TRUE)
+str(train1)
+```
+
+## Feature Selection
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+#library(Boruta)
+
+#set.seed(11)
+#boruta <- Boruta(SalePrice~., data=train1, doTrace=2, maxRuns=200, holdHistory=TRUE); boruta  # This is about a 10-minute run.
+# Save it for later use 
+#saveRDS(boruta, file='boruta.rds')
+boruta <- readRDS('boruta.rds')
+
+plot(boruta, las=2, cex.axis=0.5, 
+     main='Feature Importance', xlab='')
+
+```
+
+And for each variable, Boruta reported the following statistics:
+
+```{r}
+attStats(boruta)
+
+trimmed <- TentativeRoughFix(boruta)
+trimmed
+
+getNonRejectedFormula(boruta)
+
+```
+
+## Partition Data for Training and Testing
+
+```{r}
+#Dropping the intercept column in x.
+set.seed(22)
+part <- sample(2, nrow(train1), replace=TRUE, prob=c(0.7,0.3))
+train <- train1[part==1,]
+test <- train1[part==2,]
+
+#
+library(caret)
+custom <- trainControl(method='repeatedcv',
+                         number=10,
+                         repeats=5,
+                         verboseIter=TRUE)
+
+set.seed(33)
+en <- train(SalePrice ~ LandSlope + Neighborhood + BldgType + HouseStyle + 
+    OverallQual + OverallCond + YearBuilt + YearRemodAdd + RoofStyle + 
+    Exterior1st + Exterior2nd + MasVnrType + MasVnrArea + ExterQual + 
+    Foundation + BsmtQual + BsmtCond + BsmtExposure + BsmtFinType1 + 
+    BsmtUnfSF + TotalBsmtSF + HeatingQC + CentralAir + Electrical + 
+    X1stFlrSF + X2ndFlrSF + GrLivArea + BsmtFullBath + FullBath + 
+    HalfBath + BedroomAbvGr + KitchenAbvGr + KitchenQual + TotRmsAbvGrd + 
+    Functional + FireplaceQu + GarageType + GarageYrBlt + GarageFinish + 
+    GarageCars + GarageArea + GarageCond + PavedDrive + WoodDeckSF + 
+    OpenPorchSF + EnclosedPorch + SaleCondition, 
+    train, method='glmnet', 
+    tuneGrid=expand.grid(alpha=seq(0,1,length=10),
+                         lambda=seq(0.0001,1,length=5)),
+    trControl=custom)
+en
+summary(en)
+plot(en)
+plot(en$finalModel, xvar='lambda', labet=TRUE)
+plot(en$finalModel, xvar='dev', labet=TRUE)
+plot(varImp(en))
+en$bestTune
+best <- en$finalModel
+coef(best, s=en$bestTune$lambda)
+
+p1 <- predict(en,train)
+sqrt(mean((train$SalePrice-p1)^2))
+p2 <- predict(en,test)
+sqrt(mean((test$SalePrice-p2)^2))
+
+n <- nrow(train1)
+train.rows <-  sample(1:n, 0.7*n) # 70/30 split
+
+cva <- cva.glmnet(SalePrice ~ ., data=train1[train.rows,])
+plot(cva)
+plot(cva$modlist[[10]])
+
+predict.saleprice <- predict(cva,train1[-train.rows,], alpha=cva$alpha)
+
+plot(predict.saleprice)
+
+x.train <- x[train,]
+y.train <- y[train]
+
+x.test <- x[-train,]
+y.test <- y[-train]
+
+# Distribution of train and test data
+#nrow(x.train)/nrow(x)
+#nrow(x.test)/nrow(x)
+
+```
+
+### First 5 Rows of Train and Test Data
+
+```{r}
+print('First 5 rows of train data')
+head(x.train)
+head(y.train)
+
+print('First 5 rows of test data')
+head(x.test)
+head(y.test)
+
+```
+
+## Multilinear Regression Model
+
+- 10 Fold Cross Vlaidation
+
+```{r}
+set.seed(33)
+
+trail.list <- list()
+
+for (i in 0:10){
+  alfa <-  i/10  # 0.1 increatment of alpha
+  this.trail <- paste0('alpha_', alfa)
+  trail.list[[this.trail]] <- cv.glmnet(x.train, y.train, alpha=alfa)
+  # cv.glmnet defaults to 10-fold cross validation 
+  # and returns the best lambda value.
+}
+
+cva <- cva.glmnet(SalePrice ~ ., data=train1[train.rows,])
+predict.saleprice <- predict(cva,train1[-train.rows,], alpha=cva$alpha)
+plot(predict.saleprice)
+
+results <- data.frame()
+
+for (j in 0:10){
+  this.fit <- paste0('alpha_', alfa)
+  prediction <- predict()
+}
+
+```
+
+## Refining the Model
+
+```{r}
+set.seed(44)
+```
+
+
+## Prediction
+
+```{r}
+```
+

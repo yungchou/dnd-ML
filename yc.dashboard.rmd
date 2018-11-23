@@ -1,0 +1,88 @@
+---
+title: "Yung's Dashboard"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: fill
+#    social:['linkedin','twitter','menu']
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(knitr)
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(DT)
+library(openintro)
+library(highcharter)
+library(rpivotTable)
+```
+
+```{r}
+data <- read.csv('data/vehicle.csv', header=TRUE)
+#str(data)
+```
+
+```{r}
+mycolors <- c('blue', '#FFC125', 'darkgreen', 'darkorange')
+```
+
+Interactive Data Visualization
+==============================
+
+Row
+------------------------------
+
+### Car Failure Analysis
+
+```{r}
+valueBox(paste('Failure'), color='warning')
+```
+
+### Car Failures in US
+
+```{r}
+valueBox(length(data$State),icon='fa-user')
+```
+
+### **Labor Cost**
+
+```{r}
+gauge(round(mean(data$lc),digits=2), min=0, max=350,
+            gaugeSectors(
+              success=c(0,  150), 
+              warning=c(150,240), 
+              danger =c(240,350),
+              colors =c('green','yellow','red')
+            ))
+
+```
+
+### Massachusetts
+
+```{r}
+valueBox(sum(data$State=='MA'), icon='fa-building')
+
+```
+
+### Texas
+
+```{r}
+valueBox(sum(data$State=='TX'), icon='fa-building')
+
+```
+
+### Florida
+
+```{r}
+valueBox(sum(data$State=='FL'), icon='fa-building')
+
+```
+
+### California
+
+```{r}
+valueBox(sum(data$State=='CA'), icon='fa-building')
+
+```
