@@ -11,7 +11,6 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message=FALSE)
 
 ```{r }
 library(dplyr)
-mydata <- read.csv('data/sampledata.csv')
 
 #str(mydata)
 #summary(mydata)
@@ -23,30 +22,42 @@ mydata <- read.csv('data/sampledata.csv')
 
 ## List each data type and associated variables
 
+### Iris
 ```{r}
-# List out the data type of each variable or column
-var.types <- sapply(colnames(mydata), function(x){class(mydata[[x]])}); var.types
+str(iris)
 
-# Identify the unique data types 
-unique.types <- unique(var.types)
+var.type <- sapply(colnames(iris),function(x){class(iris[[x]])})
+var <- lapply(unique(var.type),function(x){var.type[var.type==x]})
+names(var) <- unique(var.type)
+
+library(psych)
+pairs.panels(iris[names(var$numeric)])
+
+```
+
+### Sample data
+
+```{r}
+mydata <- read.csv('data/sampledata.csv')
+
+# List out the data type of each variable or column
+var.type <- sapply(colnames(mydata), function(x){class(mydata[[x]])}); var.type
 
 ```
 
 
 ```{r}
 # Group variables into respective data types
-var <- lapply(unique.types, function(x){ names(var.types[var.types==x])})
+var <- lapply(unique(var.type), function(x){ names(var.type[var.type==x])})
 
 # Assign a data type as the name of an associated column
-names(var) <- unique(var.types)
+names(var) <- unique(var.type);
+var$integer
+var$factor
 
 # Show all data types and associated variables
-for (i in  1:length(var)){ cat(names(var[i]),' = ',unlist(var[i]),'\n') }
-```
+for (i in  1:length(var)){ cat(names(var[i]),' = ',names(var[[i]]),'\n') }
 
-```{r}
-# Finad all factor variables
-var.char <- sapply(colnames(mydata), function(x){class(mydata[x])})
 ```
 
 ## Sampling
