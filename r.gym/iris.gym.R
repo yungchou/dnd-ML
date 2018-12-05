@@ -1,13 +1,9 @@
 str(iris)
 
 # Get the data type of each variable
-var <- sapply(colnames(iris),function(x){class(iris[[x]])})
-
-# Group the variables with the same data types
-var.datatype <- lapply(unique(var),function(x){names(var[var==x])})
-
-# Assign the data type name to respective columns
-names(var.datatype) <- unique(var)
+var <- sapply(iris,class)
+vartype <- lapply(unique(var), function(x){names(var[var==x])})
+names(vartype) <- unique(var); vartype
 
 var.datatype
 
